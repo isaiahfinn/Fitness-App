@@ -66,9 +66,8 @@
   .back-btn:active{transform:scale(.95);}
   .wk-title{font-weight:900; text-transform:uppercase; letter-spacing:.04em; font-size:20px; line-height:1; margin:2px 0 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 
-  .roadmap{display:flex; align-items:center; gap:10px; overflow-x:auto; padding:0 16px; height:64px; border-bottom:1px solid var(--border); background:var(--bg);}
-  .rm-dot{flex:none; border-radius:999px; transition:all .2s ease; width:11px; height:11px; padding:0;}
-  .rm-fin{flex:none; display:flex; align-items:center; justify-content:center; border-radius:6px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; font-size:11px; padding:0 10px; height:26px;}
+  .roadmap{display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:12px 16px; max-height:42vh; overflow-y:auto; border-bottom:1px solid var(--border); background:var(--bg);}
+  .rm-pill{flex:none; max-width:100%; display:flex; align-items:center; border-radius:999px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; font-size:13px; line-height:1; padding:9px 13px; min-height:34px; transition:background .15s ease, color .15s ease, box-shadow .15s ease; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 
   .snap{scroll-snap-type:y mandatory; flex:1; min-height:0; overflow-y:auto;}
   .snap-card{scroll-snap-align:start; scroll-snap-stop:always; padding:16px 16px 0; display:flex; flex-direction:column;}
@@ -358,14 +357,14 @@ function renderWorkout(day){
   clear();
   var total = day.exercises.length + 1;
 
-  // roadmap items
+  // roadmap items — one name pill per exercise + finisher
   var rmEls = [];
   day.exercises.forEach(function(ex,i){
-    rmEls.push(el("button",{class:"rm-dot", "aria-label":"Exercise "+(i+1), "data-rm":i,
-      style:"background:var(--idle)", onClick:function(){ jumpTo(i); }}));
+    rmEls.push(el("button",{class:"rm-pill cond", "aria-label":"Exercise "+(i+1)+": "+ex.name, "data-rm":i,
+      onClick:function(){ jumpTo(i); }, text:ex.name}));
   });
-  var finPill = el("button",{class:"rm-fin cond", "data-rm":(total-1),
-    style:"background:var(--idle);color:var(--text-dim)", text:"FIN", onClick:function(){ jumpTo(total-1); }});
+  var finPill = el("button",{class:"rm-pill rm-fin cond", "data-rm":(total-1),
+    text:"Finisher", onClick:function(){ jumpTo(total-1); }});
   rmEls.push(finPill);
   var roadmap = el("div",{class:"roadmap no-scrollbar"}, rmEls);
 
@@ -430,21 +429,28 @@ function renderWorkout(day){
     rmEls.forEach(function(node,i){
       var done = i < current, active = i === current;
       var color = i < day.exercises.length ? MUSCLE_COLOR[day.exercises[i].muscle] : day.accent;
-      if(node.classList.contains("rm-fin")){
-        node.style.height = active?"30px":"26px";
-        node.style.color = (done||active)?"#080C14":"var(--text-dim)";
-        node.style.background = (done||active)?color:"var(--idle)";
-        node.style.boxShadow = active?("0 0 12px "+hexA(color,"AA")):"none";
-        node.style.outline = active?"2px solid #F0F2F8":"none"; node.style.outlineOffset="1px";
+      if(active){
+        node.style.background = color;
+        node.style.color = "#080C14";
+        node.style.border = "1px solid "+color;
+        node.style.boxShadow = "0 0 12px "+hexA(color,"AA");
+        node.style.outline = "2px solid #F0F2F8"; node.style.outlineOffset = "1px";
+      } else if(done){
+        node.style.background = hexA(color,"22");
+        node.style.color = color;
+        node.style.border = "1px solid "+hexA(color,"55");
+        node.style.boxShadow = "none";
+        node.style.outline = "none";
       } else {
-        node.style.width = active?"16px":"11px"; node.style.height = active?"16px":"11px";
-        node.style.background = (done||active)?color:"var(--idle)";
-        node.style.boxShadow = active?("0 0 10px "+color):"none";
-        node.style.outline = active?"2px solid #F0F2F8":"none"; node.style.outlineOffset="2px";
+        node.style.background = "var(--card-raised)";
+        node.style.color = "var(--text-dim)";
+        node.style.border = "1px solid var(--border)";
+        node.style.boxShadow = "none";
+        node.style.outline = "none";
       }
     });
     var activeNode = rmEls[current];
-    if(activeNode && activeNode.scrollIntoView) activeNode.scrollIntoView({behavior:"smooth", inline:"center", block:"nearest"});
+    if(activeNode && activeNode.scrollIntoView) activeNode.scrollIntoView({behavior:"smooth", block:"nearest"});
   }
 
   var ratios = {};
